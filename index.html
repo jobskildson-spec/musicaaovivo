@@ -16,7 +16,7 @@
   <!-- QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <!-- FIREBASE REALTIME LIBRARIES (CDN COMPATÍVEL) -->
+  <!-- FIREBASE REALTIME LIBRARIES -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -154,7 +154,6 @@
 
     <!-- VIEW 1: CLIENTE -->
     <main id="client-view" class="flex-1 max-w-xl w-full mx-auto px-4 py-6 space-y-6">
-      <!-- ARTIST PROFILE BANNER -->
       <section class="glass-panel rounded-3xl p-6 relative overflow-hidden text-center shadow-glass border-amber-500/20">
         <div class="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent opacity-80"></div>
         
@@ -501,7 +500,58 @@
 
   <script>
     /* =====================================================================
-       1. FIREBASE CONFIGURAÇÃO ONLINE OFICIAL
+       FUNÇÕES GLOBAIS DE CONTROLE DE TELA (CARREGADAS PRIMEIRO)
+       ===================================================================== */
+    function switchView(targetView) {
+      const clientView = document.getElementById('client-view');
+      const stageView = document.getElementById('stage-view');
+      const tabClientBtn = document.getElementById('tab-client-btn');
+      const tabStageBtn = document.getElementById('tab-stage-btn');
+
+      if (!clientView || !stageView) return;
+
+      if (targetView === 'client') {
+        clientView.classList.remove('hidden');
+        stageView.classList.add('hidden');
+        tabClientBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-gold text-black shadow-sm flex items-center gap-1.5";
+        tabStageBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white flex items-center gap-1.5 relative";
+      } else {
+        clientView.classList.add('hidden');
+        stageView.classList.remove('hidden');
+        tabStageBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-gold text-black shadow-sm flex items-center gap-1.5 relative";
+        tabClientBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white flex items-center gap-1.5";
+
+        if (isStageUnlocked) {
+          document.getElementById('stage-auth-gate').classList.add('hidden');
+          document.getElementById('stage-dashboard').classList.remove('hidden');
+        } else {
+          document.getElementById('stage-auth-gate').classList.remove('hidden');
+          document.getElementById('stage-dashboard').classList.add('hidden');
+        }
+      }
+    }
+
+    function switchStageTab(tab) {
+      const queueSec = document.getElementById('stage-queue-section');
+      const settingsSec = document.getElementById('stage-settings-section');
+      const btnQueue = document.getElementById('stage-subtab-queue');
+      const btnSettings = document.getElementById('stage-subtab-settings');
+
+      if (tab === 'queue') {
+        queueSec.classList.remove('hidden');
+        settingsSec.classList.add('hidden');
+        btnQueue.className = "px-3 py-2 rounded-xl bg-brand-gold text-black text-xs font-bold";
+        btnSettings.className = "px-3 py-2 rounded-xl bg-white/10 text-white text-xs font-semibold";
+      } else {
+        queueSec.classList.add('hidden');
+        settingsSec.classList.remove('hidden');
+        btnSettings.className = "px-3 py-2 rounded-xl bg-brand-gold text-black text-xs font-bold";
+        btnQueue.className = "px-3 py-2 rounded-xl bg-white/10 text-white text-xs font-semibold";
+      }
+    }
+
+    /* =====================================================================
+       FIREBASE CONFIGURAÇÃO ONLINE
        ===================================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyAR6zfLsM0M5_WAjEMTSuk3vceH0H-ifLc",
@@ -517,7 +567,7 @@
     const db = firebase.database();
 
     /* =====================================================================
-       2. DADOS PADRÃO & ESTADO
+       DADOS PADRÃO & ESTADO
        ===================================================================== */
     const DEFAULT_REPERTOIRE = [
       { id: '1', title: 'Evidências', artist: 'Chitãozinho & Xororó', category: 'Sertanejo', key: 'E' },
@@ -552,9 +602,6 @@
     let nowPlayingRequest = null;
     let stageRequests = [];
 
-    /* =====================================================================
-       3. INICIALIZAÇÃO E SINCRONIZAÇÃO EM TEMPO REAL COM FIREBASE
-       ===================================================================== */
     window.addEventListener('DOMContentLoaded', () => {
       applyProfileToUI();
       populateSettingsFormInputs();
@@ -564,7 +611,6 @@
 
       document.getElementById('app-share-url').textContent = window.location.href;
 
-      // Escuta os pedidos diretamente no banco de dados na nuvem
       db.ref('pedidos').on('value', (snapshot) => {
         const data = snapshot.val();
         const previousCount = stageRequests.filter(r => r.status === 'pending').length;
@@ -574,7 +620,6 @@
           Object.keys(data).forEach((key) => {
             stageRequests.push({ id: key, ...data[key] });
           });
-          // Mais recentes primeiro
           stageRequests.reverse();
         }
 
@@ -587,7 +632,6 @@
         updateStats();
       });
 
-      // Sincroniza perfil e configurações na nuvem
       db.ref('configuracao/perfil').on('value', (snapshot) => {
         const val = snapshot.val();
         if (val) {
@@ -598,9 +642,6 @@
       });
     });
 
-    /* =====================================================================
-       4. CLIENT VIEW & ACTIONS
-       ===================================================================== */
     function applyProfileToUI() {
       document.getElementById('artist-name-display').textContent = artistProfile.artistName || 'Kildson';
       document.getElementById('artist-tag-display').textContent = artistProfile.artistTag || '🎤 VOZ & VIOLÃO';
@@ -622,4 +663,448 @@
       document.getElementById('cfg-pix-title').value = artistProfile.pixTitle || '';
       document.getElementById('cfg-link-instagram').value = artistProfile.instagram || '';
       document.getElementById('cfg-link-spotify').value = artistProfile.spotify || '';
-      document.getElementById('cfg-link-whatsapp').
+      document.getElementById('cfg-link-whatsapp').value = artistProfile.whatsapp || '';
+      document.getElementById('cfg-link-website').value = artistProfile.website || '';
+    }
+
+    function buildCategoryPills() {
+      const categories = ['Todos', ...new Set(REPERTOIRE.map(s => s.category))];
+      const pillsContainer = document.getElementById('category-pills');
+      pillsContainer.innerHTML = '';
+
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `px-3 py-1 rounded-xl whitespace-nowrap text-xs font-medium ${
+          cat === activeCategory 
+            ? 'bg-amber-500/20 text-brand-gold border border-brand-gold/40 shadow-sm' 
+            : 'bg-white/5 text-gray-400 border border-white/5 hover:text-white'
+        }`;
+        btn.textContent = cat;
+        btn.onclick = () => {
+          activeCategory = cat;
+          buildCategoryPills();
+          filterSongList();
+        };
+        pillsContainer.appendChild(btn);
+      });
+    }
+
+    function renderSongCatalog(filteredList = null) {
+      const container = document.getElementById('songs-list-box');
+      const list = filteredList || REPERTOIRE;
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="p-3 text-center text-xs text-gray-500">Nenhuma música encontrada no catálogo. Digite acima ou selecione fora do repertório.</div>`;
+        return;
+      }
+
+      list.forEach(song => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between p-2.5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors border border-transparent hover:border-amber-500/20";
+        item.onclick = () => selectSong(song);
+        item.innerHTML = `
+          <div class="flex flex-col text-left">
+            <span class="text-xs font-semibold text-white">${escapeHtml(song.title)}</span>
+            <span class="text-[11px] text-gray-400">${escapeHtml(song.artist)} • <span class="text-amber-400/80">${escapeHtml(song.category)}</span></span>
+          </div>
+          <span class="text-[10px] font-mono bg-white/5 px-2 py-0.5 rounded text-gray-300">Tom: ${escapeHtml(song.key)}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function filterSongList() {
+      const query = document.getElementById('song-search').value.toLowerCase().trim();
+      let list = REPERTOIRE;
+
+      if (activeCategory !== 'Todos') {
+        list = list.filter(s => s.category === activeCategory);
+      }
+      if (query) {
+        list = list.filter(s => s.title.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query));
+      }
+      renderSongCatalog(list);
+    }
+
+    function selectSong(song) {
+      selectedSongData = song;
+      document.getElementById('selected-song-input').value = song.title;
+      document.getElementById('selected-song-name').innerHTML = `<b>${escapeHtml(song.title)}</b> — ${escapeHtml(song.artist)} (Tom: ${escapeHtml(song.key)})`;
+      document.getElementById('selected-song-badge').classList.remove('hidden');
+      document.getElementById('selected-song-badge').classList.add('flex');
+      document.getElementById('song-search').classList.add('hidden');
+      document.getElementById('songs-list-box').classList.add('hidden');
+    }
+
+    function clearSelectedSong() {
+      selectedSongData = null;
+      document.getElementById('selected-song-input').value = '';
+      document.getElementById('selected-song-badge').classList.add('hidden');
+      document.getElementById('selected-song-badge').classList.remove('flex');
+      document.getElementById('song-search').classList.remove('hidden');
+      document.getElementById('songs-list-box').classList.remove('hidden');
+    }
+
+    function toggleCustomSongInput() {
+      isCustomSong = !isCustomSong;
+      const customContainer = document.getElementById('custom-song-container');
+      const catalogContainer = document.getElementById('catalog-selector-container');
+      const toggleLabel = document.getElementById('toggle-custom-label');
+      const customInput = document.getElementById('custom-song-input');
+      const songInput = document.getElementById('selected-song-input');
+
+      if (isCustomSong) {
+        customContainer.classList.remove('hidden');
+        catalogContainer.classList.add('hidden');
+        toggleLabel.textContent = '← Escolher do repertório';
+        customInput.setAttribute('required', 'true');
+        songInput.removeAttribute('required');
+        customInput.focus();
+      } else {
+        customContainer.classList.add('hidden');
+        catalogContainer.classList.remove('hidden');
+        toggleLabel.textContent = '+ Música fora do repertório';
+        customInput.removeAttribute('required');
+        songInput.setAttribute('required', 'true');
+      }
+    }
+
+    function handleSendRequest(event) {
+      event.preventDefault();
+
+      let finalSongTitle = '';
+      let finalArtist = 'Original / Desconhecido';
+      let songKey = 'A definir';
+
+      if (isCustomSong) {
+        finalSongTitle = document.getElementById('custom-song-input').value.trim();
+        finalArtist = 'Pedido Livre';
+      } else {
+        if (!selectedSongData) {
+          const typed = document.getElementById('song-search').value.trim();
+          if (!typed) return;
+          finalSongTitle = typed;
+          finalArtist = 'Sugestão do cliente';
+        } else {
+          finalSongTitle = selectedSongData.title;
+          finalArtist = selectedSongData.artist;
+          songKey = selectedSongData.key;
+        }
+      }
+
+      const requesterName = document.getElementById('requester-name').value.trim();
+      const requesterTable = document.getElementById('requester-table').value.trim() || 'No salão';
+      const dedication = document.getElementById('requester-dedication').value.trim();
+
+      const newRequest = {
+        songTitle: finalSongTitle,
+        artist: finalArtist,
+        requester: requesterName,
+        table: requesterTable,
+        dedication: dedication,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        key: songKey,
+        status: 'pending'
+      };
+
+      db.ref('pedidos').push(newRequest)
+        .then(() => {
+          document.getElementById('request-form').reset();
+          clearSelectedSong();
+          if (isCustomSong) toggleCustomSongInput();
+          document.getElementById('success-banner').classList.remove('hidden');
+          document.getElementById('success-banner').scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(err => {
+          alert('Erro ao enviar pedido para o palco. Verifique sua conexão.');
+        });
+    }
+
+    function dismissSuccessBanner() {
+      document.getElementById('success-banner').classList.add('hidden');
+    }
+
+    function copyPixKey() {
+      const pixKey = artistProfile.pixKey || "pix@kildsoncantor.com.br";
+      const btnLabel = document.getElementById('pix-btn-label');
+      navigator.clipboard.writeText(pixKey).then(() => {
+        btnLabel.textContent = "Copiado! ✓";
+        setTimeout(() => { btnLabel.textContent = "Copiar Pix"; }, 2500);
+      });
+    }
+
+    function handleStageLogin(event) {
+      event.preventDefault();
+      const enteredPin = document.getElementById('stage-pin-input').value.trim();
+      const errorMsg = document.getElementById('pin-error-msg');
+
+      if (enteredPin === stagePin) {
+        isStageUnlocked = true;
+        errorMsg.classList.add('hidden');
+        document.getElementById('stage-auth-gate').classList.add('hidden');
+        document.getElementById('stage-dashboard').classList.remove('hidden');
+        renderStageFeed();
+      } else {
+        errorMsg.classList.remove('hidden');
+      }
+    }
+
+    function lockStage() {
+      isStageUnlocked = false;
+      document.getElementById('stage-pin-input').value = '';
+      document.getElementById('stage-auth-gate').classList.remove('hidden');
+      document.getElementById('stage-dashboard').classList.add('hidden');
+    }
+
+    function handleChangeStagePin(event) {
+      event.preventDefault();
+      const current = document.getElementById('pin-current-input').value.trim();
+      const newPin = document.getElementById('pin-new-input').value.trim();
+      const confirmPin = document.getElementById('pin-confirm-input').value.trim();
+      const statusEl = document.getElementById('pin-change-status');
+
+      if (current !== stagePin) {
+        statusEl.className = "text-xs font-semibold text-red-400";
+        statusEl.textContent = "Senha atual incorreta.";
+        statusEl.classList.remove('hidden');
+        return;
+      }
+      if (newPin !== confirmPin) {
+        statusEl.className = "text-xs font-semibold text-red-400";
+        statusEl.textContent = "As senhas não coincidem.";
+        statusEl.classList.remove('hidden');
+        return;
+      }
+
+      stagePin = newPin;
+      localStorage.setItem('stagerequest_pin', stagePin);
+      statusEl.className = "text-xs font-semibold text-emerald-400";
+      statusEl.textContent = "✓ Senha atualizada!";
+      statusEl.classList.remove('hidden');
+
+      document.getElementById('pin-current-input').value = '';
+      document.getElementById('pin-new-input').value = '';
+      document.getElementById('pin-confirm-input').value = '';
+      setTimeout(() => statusEl.classList.add('hidden'), 3000);
+    }
+
+    function handleSaveProfileSettings(event) {
+      event.preventDefault();
+      artistProfile = {
+        artistName: document.getElementById('cfg-artist-name').value.trim(),
+        artistTag: document.getElementById('cfg-artist-tag').value.trim(),
+        artistBio: document.getElementById('cfg-artist-bio').value.trim(),
+        pixKey: document.getElementById('cfg-pix-key').value.trim(),
+        pixTitle: document.getElementById('cfg-pix-title').value.trim(),
+        instagram: document.getElementById('cfg-link-instagram').value.trim(),
+        spotify: document.getElementById('cfg-link-spotify').value.trim(),
+        whatsapp: document.getElementById('cfg-link-whatsapp').value.trim(),
+        website: document.getElementById('cfg-link-website').value.trim()
+      };
+
+      localStorage.setItem('stagerequest_profile', JSON.stringify(artistProfile));
+      db.ref('configuracao/perfil').set(artistProfile);
+      applyProfileToUI();
+
+      const msg = document.getElementById('profile-saved-msg');
+      msg.classList.remove('hidden');
+      setTimeout(() => msg.classList.add('hidden'), 3000);
+    }
+
+    function renderStageFeed() {
+      const container = document.getElementById('stage-cards-container');
+      const emptyState = document.getElementById('stage-empty-state');
+      const pendingList = stageRequests.filter(r => r.status === 'pending');
+
+      if (pendingList.length === 0) {
+        emptyState.classList.remove('hidden');
+        container.innerHTML = '';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = '';
+
+      pendingList.forEach((req) => {
+        const card = document.createElement('div');
+        card.className = "glass-panel p-4 rounded-2xl border border-white/10 hover:border-amber-500/40 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4";
+        card.innerHTML = `
+          <div class="space-y-1.5 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-brand-gold border border-brand-gold/30">TOM: ${escapeHtml(req.key)}</span>
+              <span class="text-xs text-gray-400 font-mono">${escapeHtml(req.timestamp)}</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-white/10 text-white">📍 ${escapeHtml(req.table)}</span>
+            </div>
+            <h4 class="text-xl sm:text-2xl font-display font-extrabold text-white tracking-wide">${escapeHtml(req.songTitle)}</h4>
+            <p class="text-xs text-gray-300">
+              <span class="text-gray-400">Por:</span> <b class="text-white">${escapeHtml(req.requester)}</b>
+              ${req.artist !== 'Pedido Livre' ? ` • <span class="text-gray-400">Orig:</span> ${escapeHtml(req.artist)}` : ''}
+            </p>
+            ${req.dedication ? `<div class="mt-2 p-2.5 rounded-xl bg-amber-500/10 border-l-2 border-brand-gold text-xs text-amber-200 italic">"${escapeHtml(req.dedication)}"</div>` : ''}
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button onclick="setNowPlaying('${req.id}')" class="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-xs shadow-green-glow">TOCAR AGORA</button>
+            <button onclick="markAsCompleted('${req.id}')" class="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs">✓ Concluir</button>
+            <button onclick="skipRequest('${req.id}')" class="px-2.5 py-2.5 rounded-xl bg-red-500/10 text-red-400 font-bold text-xs">✕</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function setNowPlaying(reqId) {
+      const found = stageRequests.find(r => r.id === reqId);
+      if (!found) return;
+
+      nowPlayingRequest = found;
+      db.ref('pedidos/' + reqId + '/status').set('playing');
+
+      const banner = document.getElementById('now-playing-banner');
+      document.getElementById('now-playing-title').textContent = found.songTitle;
+      document.getElementById('now-playing-details').textContent = `Pedido por: ${found.requester} • ${found.table} ${found.dedication ? `• "${found.dedication}"` : ''}`;
+      banner.classList.remove('hidden');
+    }
+
+    function finishNowPlaying() {
+      if (nowPlayingRequest) {
+        db.ref('pedidos/' + nowPlayingRequest.id + '/status').set('completed');
+        nowPlayingRequest = null;
+      }
+      document.getElementById('now-playing-banner').classList.add('hidden');
+    }
+
+    function markAsCompleted(reqId) {
+      db.ref('pedidos/' + reqId + '/status').set('completed');
+    }
+
+    function skipRequest(reqId) {
+      db.ref('pedidos/' + reqId + '/status').set('skipped');
+    }
+
+    function clearAllRequestsPrompt() {
+      if (confirm('Deseja limpar todos os pedidos da tela?')) {
+        db.ref('pedidos').remove();
+        if (nowPlayingRequest) {
+          document.getElementById('now-playing-banner').classList.add('hidden');
+          nowPlayingRequest = null;
+        }
+      }
+    }
+
+    function updateStats() {
+      const pendingCount = stageRequests.filter(r => r.status === 'pending').length;
+      const completedCount = stageRequests.filter(r => r.status === 'completed').length;
+      document.getElementById('stat-pending-num').textContent = pendingCount;
+      document.getElementById('stat-completed-num').textContent = completedCount;
+
+      const badge = document.getElementById('badge-pending-count');
+      if (pendingCount > 0) {
+        badge.textContent = pendingCount;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function renderManageCatalogList() {
+      const listEl = document.getElementById('catalog-manage-list');
+      document.getElementById('repertoire-total-badge').textContent = `${REPERTOIRE.length} músicas`;
+      listEl.innerHTML = '';
+
+      REPERTOIRE.forEach(song => {
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between p-2 rounded-lg bg-white/5 text-xs";
+        row.innerHTML = `
+          <div><b class="text-white">${escapeHtml(song.title)}</b> <span class="text-gray-400">— ${escapeHtml(song.artist)} (Tom: ${escapeHtml(song.key)})</span></div>
+          <button onclick="removeSongFromCatalog('${song.id}')" class="text-red-400 px-2 py-1 bg-red-500/10 rounded">✕</button>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    function handleAddSongToCatalog(event) {
+      event.preventDefault();
+      const newSong = {
+        id: 'song-' + Date.now(),
+        title: document.getElementById('new-song-title').value.trim(),
+        artist: document.getElementById('new-song-artist').value.trim(),
+        key: document.getElementById('new-song-key').value.trim().toUpperCase(),
+        category: document.getElementById('new-song-category').value.trim()
+      };
+      REPERTOIRE.push(newSong);
+      localStorage.setItem('stagerequest_repertoire', JSON.stringify(REPERTOIRE));
+      document.getElementById('new-song-title').value = '';
+      document.getElementById('new-song-artist').value = '';
+      document.getElementById('new-song-key').value = '';
+      document.getElementById('new-song-category').value = '';
+      buildCategoryPills();
+      renderSongCatalog();
+      renderManageCatalogList();
+    }
+
+    function removeSongFromCatalog(songId) {
+      REPERTOIRE = REPERTOIRE.filter(s => s.id !== songId);
+      localStorage.setItem('stagerequest_repertoire', JSON.stringify(REPERTOIRE));
+      buildCategoryPills();
+      renderSongCatalog();
+      renderManageCatalogList();
+    }
+
+    function toggleAudioChime() {
+      audioChimeEnabled = !audioChimeEnabled;
+      document.getElementById('audio-toggle-btn').textContent = audioChimeEnabled ? '🔔 Som: ON' : '🔕 Som: OFF';
+    }
+
+    function playStageChime() {
+      if (!audioChimeEnabled) return;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        [440, 659.25, 880].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.12);
+          gain.gain.setValueAtTime(0, audioCtx.currentTime + idx * 0.12);
+          gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + idx * 0.12 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.12 + 0.6);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + idx * 0.12);
+          osc.stop(audioCtx.currentTime + idx * 0.12 + 0.65);
+        });
+      } catch (e) {}
+    }
+
+    let qrGenerated = false;
+    function openQrModal() {
+      document.getElementById('qr-modal').classList.remove('hidden');
+      document.getElementById('qr-modal').classList.add('flex');
+      if (!qrGenerated) {
+        new QRCode(document.getElementById('qrcode-display'), {
+          text: window.location.href,
+          width: 190,
+          height: 190,
+          colorDark: "#090A0F",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+        qrGenerated = true;
+      }
+    }
+    function closeQrModal() {
+      document.getElementById('qr-modal').classList.add('hidden');
+      document.getElementById('qr-modal').classList.remove('flex');
+    }
+    function copyShareUrl() {
+      navigator.clipboard.writeText(window.location.href);
+      closeQrModal();
+    }
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
