@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>StageRequest Live • Conecte-se com o Palco</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- QRCode.js for generating stage QR codes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            display: ['Outfit', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              gold: '#F59E0B',
+              goldLight: '#FBBF24',
+              goldGlow: '#D97706',
+              darkBg: '#090A0F',
+              cardBg: '#11131A',
+              cardHover: '#181B26',
+              neonGreen: '#10B981',
+              neonRed: '#EF4444'
+            }
+          },
+          boxShadow: {
+            'gold-glow': '0 0 25px -4px rgba(245, 158, 11, 0.35)',
+            'green-glow': '0 0 25px -4px rgba(16, 185, 129, 0.45)',
+            'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Smooth scroll & mobile optimizations */
+    html {
+      scroll-behavior: smooth;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      background-color: #090A0F;
+      color: #F3F4F6;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background lights */
+    .ambient-glow {
+      position: fixed;
+      top: -15%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.04) 40%, transparent 75%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .ambient-glow-bottom {
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Custom Scrollbar for Song List */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(17, 19, 26, 0.7);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(245, 158, 11, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(245, 158, 11, 0.7);
+    }
+
+    /* Keyframes for Live Pulse */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.85; }
+      50% { transform: scale(1.3); opacity: 0; }
+      100% { transform: scale(0.95); opacity: 0; }
+    }
+    .pulse-ring-anim {
+      animation: pulse-ring 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    }
+
+    /* Modern Card Glass border */
+    .glass-panel {
+      background: rgba(17, 19, 26, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-panel-gold {
+      background: rgba(20, 18, 15, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+  </style>
+</head>
+<body class="relative selection:bg-brand-gold selection:text-black">
+
+  <!-- Ambient light gradients -->
+  <div class="ambient-glow"></div>
+  <div class="ambient-glow-bottom"></div>
+
+  <!-- Main Container -->
+  <div class="relative z-10 flex flex-col min-h-screen">
+
+    <!-- Top Universal Navigation bar -->
+    <header class="w-full border-b border-white/10 bg-brand-darkBg/80 backdrop-blur-md sticky top-0 z-50">
+      <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+        
+        <!-- App Logo & Stage status -->
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-yellow-400 p-[1px] flex items-center justify-center shadow-gold-glow">
+            <div class="w-full h-full bg-brand-darkBg rounded-[11px] flex items-center justify-center">
+              <svg class="w-5 h-5 text-brand-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <h1 class="font-display font-bold text-base tracking-wide text-white flex items-center gap-2">
+              StageRequest <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-brand-gold border border-brand-gold/30">AO VIVO</span>
+            </h1>
+          </div>
+        </div>
+
+        <!-- View Switcher Tabs (Cliente vs Palco) -->
+        <div class="flex items-center gap-1.5 bg-brand-cardBg/90 border border-white/10 p-1 rounded-xl">
+          <button id="tab-client-btn" onclick="switchView('client')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-brand-gold text-black shadow-sm flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>Público</span>
+          </button>
+          
+          <button id="tab-stage-btn" onclick="switchView('stage')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-gray-400 hover:text-white flex items-center gap-1.5 relative">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span>Modo Palco</span>
+            <span id="badge-pending-count" class="hidden ml-1 px-1.5 py-0.2 bg-red-500 text-white rounded-full text-[10px] font-bold">0</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 1: CLIENTE / PÚBLICO (MOBILE-FIRST LUXURY DARK)     -->
+    <!-- ======================================================== -->
+    <main id="client-view" class="flex-1 max-w-xl w-full mx-auto px-4 py-6 space-y-6">
+
+      <!-- ARTIST PROFILE BANNER -->
+      <section class="glass-panel rounded-3xl p-6 relative overflow-hidden text-center shadow-glass border-amber-500/20">
+        <div class="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent opacity-80"></div>
+        
+        <!-- Live Badge -->
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-950/60 border border-red-500/30 text-red-400 text-xs font-semibold mb-4">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="pulse-ring-anim absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+          </span>
+          NO PALCO • SHOW AO VIVO
+        </div>
+
+        <!-- Avatar & Name -->
+        <div class="relative w-24 h-24 mx-auto mb-3">
+          <div class="w-full h-full rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-600 shadow-gold-glow">
+            <!-- Professional Default Musician Avatar (SVG Inline) -->
+            <div class="w-full h-full rounded-full overflow-hidden bg-gradient-to-b from-stone-800 to-neutral-900 flex items-center justify-center">
+              <svg class="w-14 h-14 text-brand-gold" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+              </svg>
+            </div>
+          </div>
+          <!-- Instrument Pill -->
+          <span id="artist-tag-display" class="absolute bottom-0 right-0 bg-neutral-900 border border-amber-500/40 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+            🎤 VOZ & VIOLÃO
+          </span>
+        </div>
+
+        <h2 id="artist-name-display" class="font-display font-extrabold text-2xl text-white tracking-wide">
+          Kildson
+        </h2>
+        <p id="artist-bio-display" class="text-sm text-gray-400 mt-1 max-w-sm mx-auto">
+          Faça seu pedido de música direto pro palco e acompanhe os momentos do show!
+        </p>
+
+        <!-- Social Links Hub -->
+        <div class="flex items-center justify-center gap-3 mt-5 pt-4 border-t border-white/5 flex-wrap">
+          
+          <!-- Instagram -->
+          <a id="link-instagram" href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 hover:text-pink-400 text-gray-300 transition-all border border-white/5 flex items-center gap-1.5 text-xs">
+            <svg class="w-4 h-4 text-pink-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+            <span>Instagram</span>
+          </a>
+
+          <!-- Spotify -->
+          <a id="link-spotify" href="https://spotify.com" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 hover:text-green-400 text-gray-300 transition-all border border-white/5 flex items-center gap-1.5 text-xs">
+            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.48.66.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+            </svg>
+            <span>Spotify</span>
+          </a>
+
+          <!-- WhatsApp / Contrate -->
+          <a id="link-whatsapp" href="https://wa.me/5500000000000" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 hover:text-emerald-400 text-gray-300 transition-all border border-white/5 flex items-center gap-1.5 text-xs">
+            <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+            </svg>
+            <span>Contratar</span>
+          </a>
+
+          <!-- Website -->
+          <a id="link-website" href="#" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 hover:text-amber-400 text-gray-300 transition-all border border-white/5 flex items-center gap-1.5 text-xs">
+            <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+            <span>Site Oficial</span>
+          </a>
+
+        </div>
+      </section>
+
+      <!-- PIX COUVERT / GORJETA BOX -->
+      <section class="glass-panel-gold rounded-3xl p-5 shadow-gold-glow relative overflow-hidden">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-brand-gold">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 14.5a1 1 0 01-2 0v-.58a4.004 4.004 0 01-2.919-3.21.75.75 0 011.472-.3c.27 1.32 1.34 2.09 2.447 2.09 1.14 0 2-.69 2-1.5 0-.82-.6-1.28-1.92-1.7-1.74-.55-3.08-1.42-3.08-3.3 0-1.77 1.33-3.12 3-3.42V4.5a1 1 0 012 0v.55a3.99 3.99 0 012.75 2.87.75.75 0 11-1.45.38c-.28-1.07-1.12-1.8-2.3-1.8-1.04 0-1.8.62-1.8 1.5 0 .74.52 1.15 1.83 1.57 1.83.58 3.17 1.48 3.17 3.43 0 1.86-1.37 3.25-3.2 3.5v.5z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 id="pix-title-display" class="text-white text-sm font-bold flex items-center gap-2">
+                Apoie o Artista • Pix Couvert
+                <span class="text-[10px] bg-amber-500/20 text-brand-gold px-2 py-0.5 rounded-md font-semibold">1 Toque</span>
+              </h3>
+              <p id="pix-key-preview" class="text-xs text-gray-400 font-mono">pix@kildsoncantor.com.br</p>
+            </div>
+          </div>
+          
+          <button onclick="copyPixKey()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-bold text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+            </svg>
+            <span id="pix-btn-label">Copiar Pix</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- MUSIC REQUEST FORM -->
+      <section class="glass-panel rounded-3xl p-6 shadow-glass border-white/10 space-y-5">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <div>
+            <h3 class="text-lg font-display font-bold text-white flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-brand-gold"></span>
+              Pedir uma Música
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">Escolha do repertório ou peça a sua favorita</p>
+          </div>
+          <span class="text-xs text-brand-gold font-medium bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+            Gratuito
+          </span>
+        </div>
+
+        <form id="request-form" onsubmit="handleSendRequest(event)" class="space-y-4">
+          
+          <!-- Category Filters Pills -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Repertório por Estilo</label>
+            <div id="category-pills" class="flex gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+              <!-- Dynamically populated categories -->
+            </div>
+          </div>
+
+          <!-- Song Selector Dropdown / Search list -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label for="song-search" class="text-xs font-semibold text-gray-300">Selecione a Música</label>
+              <button type="button" onclick="toggleCustomSongInput()" class="text-xs text-brand-gold hover:underline font-medium">
+                <span id="toggle-custom-label">+ Música fora do repertório</span>
+              </button>
+            </div>
+
+            <!-- Standard List Search/Select Container -->
+            <div id="catalog-selector-container" class="space-y-2">
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="song-search" 
+                  placeholder="Pesquisar música ou artista..." 
+                  oninput="filterSongList()" 
+                  class="w-full bg-brand-cardBg/90 border border-white/10 focus:border-brand-gold rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-gold transition-all"
+                  autocomplete="off"
+                >
+                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                  <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Quick Results Selector Box -->
+              <div id="songs-list-box" class="max-h-48 overflow-y-auto space-y-1.5 p-2 bg-black/40 rounded-xl border border-white/5">
+                <!-- Rendered dynamically -->
+              </div>
+              <input type="hidden" id="selected-song-input" required>
+              <div id="selected-song-badge" class="hidden items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-brand-gold/30 text-white text-xs">
+                <span class="font-medium text-amber-300" id="selected-song-name">Nenhuma selecionada</span>
+                <button type="button" onclick="clearSelectedSong()" class="text-gray-400 hover:text-white ml-2 text-xs">✕ Trocar</button>
+              </div>
+            </div>
+
+            <!-- Custom Song Input (Hidden by default) -->
+            <div id="custom-song-container" class="hidden">
+              <input 
+                type="text" 
+                id="custom-song-input" 
+                placeholder="Qual música você deseja ouvir?" 
+                class="w-full bg-brand-cardBg/90 border border-amber-500/50 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-gold transition-all"
+              >
+              <p class="text-[11px] text-amber-400/80 mt-1">O músico fará o possível para tocar se souber a harmonia!</p>
+            </div>
+          </div>
+
+          <!-- Name & Table Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label for="requester-name" class="block text-xs font-semibold text-gray-300 mb-1">Seu Nome / Apelido *</label>
+              <input 
+                type="text" 
+                id="requester-name" 
+                placeholder="Ex: Carlos, Ana..." 
+                required
+                class="w-full bg-brand-cardBg/90 border border-white/10 focus:border-brand-gold rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all"
+              >
+            </div>
+            <div>
+              <label for="requester-table" class="block text-xs font-semibold text-gray-300 mb-1">Mesa / Localização</label>
+              <input 
+                type="text" 
+                id="requester-table" 
+                placeholder="Ex: Mesa 04, Balcão..." 
+                class="w-full bg-brand-cardBg/90 border border-white/10 focus:border-brand-gold rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all"
+              >
+            </div>
+          </div>
+
+          <!-- Dedication field -->
+          <div>
+            <label for="requester-dedication" class="block text-xs font-semibold text-gray-300 mb-1">
+              Dedicatória Especial <span class="text-gray-500 font-normal">(Opcional)</span>
+            </label>
+            <textarea 
+              id="requester-dedication" 
+              rows="2" 
+              placeholder="Ex: 'Para o aniversário da Marcela' ou 'Pra tocar pros casais apaixonados'..." 
+              class="w-full bg-brand-cardBg/90 border border-white/10 focus:border-brand-gold rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all resize-none"
+            ></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <button 
+            type="submit" 
+            id="btn-submit-request" 
+            class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-extrabold text-sm tracking-wide shadow-gold-glow transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            <span>ENVIAR PEDIDO AO PALCO</span>
+          </button>
+
+        </form>
+      </section>
+
+      <!-- FEEDBACK / SUCCESS CARD (MODAL / TOAST STYLE) -->
+      <div id="success-banner" class="hidden glass-panel-gold rounded-2xl p-5 border-amber-500 shadow-gold-glow text-center space-y-2 animate-fade-in">
+        <div class="w-12 h-12 bg-amber-500/20 text-brand-gold rounded-full flex items-center justify-center mx-auto mb-1">
+          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h4 class="text-base font-bold text-white">Pedido enviado ao vivo!</h4>
+        <p class="text-xs text-gray-300">O músico recebeu sua solicitação diretamente na tela do palco. Fique atento!</p>
+        <button onclick="dismissSuccessBanner()" class="mt-2 text-xs text-brand-gold hover:underline font-semibold">Fazer outro pedido</button>
+      </div>
+
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 2: MODO PALCO / PAINEL DO MÚSICO (HIGH CONTRAST)    -->
+    <!-- ======================================================== -->
+    <main id="stage-view" class="hidden flex-1 max-w-5xl w-full mx-auto px-4 py-6 space-y-6">
+
+      <!-- STAGE ACCESS GATE (PIN PROTECTED) -->
+      <div id="stage-auth-gate" class="glass-panel max-w-sm mx-auto p-6 rounded-3xl text-center space-y-4 shadow-glass border-amber-500/30">
+        <div class="w-12 h-12 rounded-2xl bg-brand-gold/10 text-brand-gold flex items-center justify-center mx-auto">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-white">Painel do Músico (Palco)</h3>
+        <p class="text-xs text-gray-400">Insira sua senha de acesso para monitorar os pedidos e gerenciar o show.</p>
+        
+        <form onsubmit="handleStageLogin(event)" class="space-y-3">
+          <input 
+            type="password" 
+            id="stage-pin-input" 
+            placeholder="Digite sua senha" 
+            class="w-full text-center tracking-widest text-lg font-bold bg-black/60 border border-white/20 focus:border-brand-gold rounded-xl py-2.5 text-white focus:outline-none" 
+            maxlength="16"
+            required
+            autocomplete="current-password"
+          >
+          <button 
+            type="submit" 
+            class="w-full py-2.5 rounded-xl bg-brand-gold hover:bg-brand-goldLight text-black font-bold text-xs uppercase tracking-wider transition-all"
+          >
+            Desbloquear Painel
+          </button>
+          <p id="pin-error-msg" class="text-xs text-red-400 hidden">Senha incorreta. Tente novamente.</p>
+        </form>
+      </div>
+
+      <!-- AUTHENTICATED STAGE DASHBOARD -->
+      <div id="stage-dashboard" class="hidden space-y-6">
+        
+        <!-- Stage Top Bar: Controls, Counters & QR Code Launch -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 border-amber-500/20">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-xl bg-amber-500/20 text-brand-gold">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                Monitor do Palco
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+              </h2>
+              <div class="flex items-center gap-3 text-xs text-gray-400">
+                <span>Fila ativa: <b id="stat-pending-num" class="text-amber-400 font-bold">0</b></span>
+                <span>•</span>
+                <span>Atendidas: <b id="stat-completed-num" class="text-emerald-400 font-bold">0</b></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage Actions & Mode Sub-Tabs -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="switchStageTab('queue')" id="stage-subtab-queue" class="px-3 py-2 rounded-xl bg-brand-gold text-black text-xs font-bold flex items-center gap-1.5 transition-all">
+              <span>📋 Fila ao Vivo</span>
+            </button>
+
+            <button onclick="switchStageTab('settings')" id="stage-subtab-settings" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all">
+              <span>⚙️ Editar Modo Público</span>
+            </button>
+
+            <button onclick="openQrModal()" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all">
+              <svg class="w-4 h-4 text-brand-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+              <span>QR Code</span>
+            </button>
+            
+            <button onclick="toggleAudioChime()" id="audio-toggle-btn" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1 transition-all" title="Avisos sonoros ao receber pedidos">
+              <span id="audio-icon">🔔 Som: ON</span>
+            </button>
+
+            <button onclick="lockStage()" class="px-3 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-semibold transition-all">
+              Bloquear
+            </button>
+          </div>
+        </div>
+
+        <!-- STAGE SUB-VIEW 1: QUEUE & LIVE CONTROLS -->
+        <div id="stage-queue-section" class="space-y-6">
+          <!-- CURRENTLY PLAYING HIGHLIGHT BANNER (IF ACTIVE) -->
+          <div id="now-playing-banner" class="hidden rounded-2xl bg-emerald-950/40 border-2 border-emerald-500 p-5 shadow-green-glow">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="px-3 py-1 rounded-full bg-emerald-500 text-black font-extrabold text-xs uppercase tracking-wider animate-pulse">
+                  TOCANDO AGORA
+                </span>
+                <span id="now-playing-key" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-black/60 text-emerald-300 border border-emerald-500/30">
+                  TOM: G
+                </span>
+              </div>
+              <button onclick="finishNowPlaying()" class="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs transition-all">
+                ✓ Finalizar Música
+              </button>
+            </div>
+            <div class="mt-3">
+              <h3 id="now-playing-title" class="text-2xl sm:text-3xl font-display font-extrabold text-white">
+                Evidências
+              </h3>
+              <p id="now-playing-details" class="text-sm text-emerald-200/90 mt-1">
+                Pedido por: Pedro • Mesa 07 • "Dedicado aos noivos!"
+              </p>
+            </div>
+          </div>
+
+          <!-- STAGE FEED: PENDING & QUEUED REQUESTS -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-brand-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                Fila de Pedidos Recebidos
+              </h3>
+              <button onclick="clearAllRequestsPrompt()" class="text-xs text-gray-500 hover:text-red-400 transition-colors">
+                Limpar fila
+              </button>
+            </div>
+
+            <!-- Empty State Container -->
+            <div id="stage-empty-state" class="glass-panel rounded-2xl p-8 text-center space-y-2 border-dashed border-white/10">
+              <svg class="w-12 h-12 text-gray-600 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <p class="text-sm font-semibold text-gray-300">Nenhum pedido pendente na fila</p>
+              <p class="text-xs text-gray-500">Divulgue o QR Code para as mesas começarem a pedir!</p>
+            </div>
+
+            <!-- Request Cards Feed (High-Legibility Stage View) -->
+            <div id="stage-cards-container" class="space-y-3">
+              <!-- Dynamically injected stage cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- STAGE SUB-VIEW 2: SETTINGS & CLIENT PAGE EDITOR -->
+        <div id="stage-settings-section" class="hidden space-y-6">
+
+          <!-- ARTIST PROFILE & PIX CONFIGURATION -->
+          <div class="glass-panel rounded-3xl p-6 border-amber-500/20 space-y-5">
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <h3 class="text-lg font-display font-bold text-white flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-brand-gold"></span>
+                  Informações do Perfil Público & Pix
+                </h3>
+                <p class="text-xs text-gray-400 mt-0.5">Altere os dados exibidos aos clientes instantaneamente</p>
+              </div>
+            </div>
+
+            <form onsubmit="handleSaveProfileSettings(event)" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">Nome do Artista / Projeto</label>
+                  <input type="text" id="cfg-artist-name" required class="w-full bg-black/50 border border-white/10 focus:border-brand-gold rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">Tag / Instrumentação</label>
+                  <input type="text" id="cfg-artist-tag" placeholder="Ex: 🎤 VOZ & VIOLÃO" required class="w-full bg-black/50 border border-white/10 focus:border-brand-gold rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 mb-1">Subtítulo / Descrição Rápida</label>
+                <input type="text" id="cfg-artist-bio" required class="w-full bg-black/50 border border-white/10 focus:border-brand-gold rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none">
+              </div>
+
+              <!-- PIX Config -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">Chave Pix (E-mail, CPF, Tel ou Aleatória)</label>
+                  <input type="text" id="cfg-pix-key" required class="w-full bg-black/50 border border-white/10 focus:border-brand-gold rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">Título da Caixa Pix</label>
+                  <input type="text" id="cfg-pix-title" placeholder="Apoie o Artista • Pix Couvert" required class="w-full bg-black/50 border border-white/10 focus:border-brand-gold rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none">
+                </div>
+              </div>
+
+              <!-- Social Links Config -->
+              <div class="pt-2 border-t border-white/5 space-y-3">
+                <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider">Links e Redes Sociais</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span class="text-gray-400 block mb-1">Link Instagram</span>
+                    <input type="url" id="cfg-link-instagram" placeholder="https://instagram.com/seuperfil" class="w-full bg-black/50 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white focus:outline-none">
+                  </div>
+                  <div>
+                    <span class="text-gray-400 block mb-1">Link Spotify</span>
+                    <input type="url" id="cfg-link-spotify" placeholder="https://open.spotify.com/artist/..." class="w-full bg-black/50 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white focus:outline-none">
+                  </div>
+                  <div>
+                    <span class="text-gray-400 block mb-1">Link WhatsApp (Contratação)</span>
+                    <input type="url" id="cfg-link-whatsapp" placeholder="https://wa.me/55..." class="w-full bg-black/50 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white focus:outline-none">
+                  </div>
+                  <div>
+                    <span class="text-gray-400 block mb-1">Site Oficial</span>
+                    <input type="url" id="cfg-link-website" placeholder="https://seusite.com.br" class="w-full bg-black/50 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white focus:outline-none">
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-3">
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-gold hover:bg-brand-goldLight text-black font-extrabold text-xs shadow-gold-glow transition-all active:scale-95">
+                  Salvar Informações do Perfil
+                </button>
+                <span id="profile-saved-msg" class="text-xs text-emerald-400 font-semibold hidden">✓ Salvo com sucesso!</span>
+              </div>
+            </form>
+          </div>
+
+          <!-- REPERTOIRE CATALOG MANAGER -->
+          <div class="glass-panel rounded-3xl p-6 border-white/10 space-y-5">
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <h3 class="text-lg font-display font-bold text-white flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                  Gerenciar Músicas do Repertório
+                </h3>
+                <p class="text-xs text-gray-400 mt-0.5">Adicione novas canções ou remova faixas existentes</p>
+              </div>
+              <span id="repertoire-total-badge" class="text-xs bg-white/10 text-brand-gold px-2.5 py-1 rounded-lg font-mono">0 músicas</span>
+            </div>
+
+            <!-- Add song inline form -->
+            <form onsubmit="handleAddSongToCatalog(event)" class="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
+              <span class="text-xs font-bold text-amber-300 uppercase tracking-wider block">+ Adicionar Nova Música</span>
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+                <div class="sm:col-span-2">
+                  <input type="text" id="new-song-title" placeholder="Título da música *" required class="w-full bg-black/70 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white focus:outline-none">
+                </div>
+                <div>
+                  <input type="text" id="new-song-artist" placeholder="Artista / Banda *" required class="w-full bg-black/70 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white focus:outline-none">
+                </div>
+                <div>
+                  <input type="text" id="new-song-key" placeholder="Tom (Ex: G, D, Am)" required class="w-full bg-black/70 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white font-mono focus:outline-none">
+                </div>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <input type="text" id="new-song-category" placeholder="Estilo / Categoria (Ex: Modão, MPB, Pop)" required class="w-full max-w-xs bg-black/70 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-1 transition-all flex-shrink-0">
+                  <span>+ Inserir Música</span>
+                </button>
+              </div>
+            </form>
+
+            <!-- Songs table / list -->
+            <div id="catalog-manage-list" class="max-h-64 overflow-y-auto space-y-1.5 p-2 bg-black/40 rounded-xl border border-white/5">
+              <!-- Dynamically populated songs with remove buttons -->
+            </div>
+          </div>
+
+          <!-- SECURITY: CHANGE STAGE PIN -->
+          <div class="glass-panel rounded-3xl p-6 border-red-500/20 space-y-4">
+            <div class="flex items-center gap-2 border-b border-white/10 pb-3">
+              <div class="p-1.5 bg-red-500/20 text-red-400 rounded-lg">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-white">Alterar Senha do Modo Palco</h3>
+                <p class="text-xs text-gray-400">Proteja seu monitor de palco com uma nova senha PIN pessoal</p>
+              </div>
+            </div>
+
+            <form onsubmit="handleChangeStagePin(event)" class="space-y-3 max-w-md">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">Senha Atual *</label>
+                  <input type="password" id="pin-current-input" required class="w-full bg-black/60 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white text-sm focus:outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">Nova Senha *</label>
+                  <input type="password" id="pin-new-input" required maxlength="16" class="w-full bg-black/60 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white text-sm focus:outline-none">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 mb-1">Confirmar Nova Senha *</label>
+                <input type="password" id="pin-confirm-input" required maxlength="16" class="w-full bg-black/60 border border-white/10 focus:border-brand-gold rounded-xl px-3 py-2 text-white text-sm focus:outline-none">
+              </div>
+
+              <div class="flex items-center gap-3 pt-2">
+                <button type="submit" class="px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 font-bold text-xs transition-all">
+                  Atualizar Senha
+                </button>
+                <span id="pin-change-status" class="text-xs font-semibold hidden"></span>
+              </div>
+            </form>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto border-t border-white/5 py-4 text-center text-xs text-gray-500">
+      <p>StageRequest Live &copy; Sistema Profissional para Palco e Shows Ao Vivo</p>
+    </footer>
+
+  </div>
+
+  <!-- QR CODE MODAL FOR PROJECTOR / TABLE STANDS -->
+  <div id="qr-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass-panel max-w-sm w-full p-6 rounded-3xl text-center space-y-4 border-amber-500/40 shadow-gold-glow">
+      <div class="flex items-center justify-between">
+        <h4 class="font-bold text-white text-base">QR Code do Palco</h4>
+        <button onclick="closeQrModal()" class="text-gray-400 hover:text-white p-1 text-sm">✕ Fechar</button>
+      </div>
+
+      <div class="p-4 bg-white rounded-2xl inline-block shadow-inner">
+        <div id="qrcode-display" class="flex justify-center"></div>
+      </div>
+
+      <p class="text-xs text-gray-300 font-medium">Aponte a câmera do celular para abrir a página de pedidos instantaneamente!</p>
+      
+      <div class="text-[11px] font-mono text-gray-400 bg-white/5 p-2 rounded-xl break-all" id="app-share-url"></div>
+
+      <button onclick="copyShareUrl()" class="w-full py-2.5 rounded-xl bg-brand-gold text-black font-bold text-xs">
+        Copiar Link da Página
+      </button>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    /* =====================================================================
+       1. DATA STRUCTURES: DEFAULT REPERTOIRE & DEFAULT ARTIST CONFIG
+       ===================================================================== */
+    const DEFAULT_REPERTOIRE = [
+      // Modão & Clássicos Sertanejos
+      { id: '1', title: 'Evidências', artist: 'Chitãozinho & Xororó', category: 'Sertanejo', key: 'E', rhythm: 'Balada' },
+      { id: '2', title: 'Boate Azul', artist: 'Benedito Seviero / Matogrosso & Mathias', category: 'Modão', key: 'Am', rhythm: 'Guarânia' },
+      { id: '3', title: 'Telefone Mudo', artist: 'Trio Parada Dura', category: 'Modão', key: 'G', rhythm: 'Guarânia' },
+      { id: '4', title: 'Ainda Ontem Chorei de Saudade', artist: 'João Mineiro & Marciano', category: 'Modão', key: 'D', rhythm: 'Canção' },
+      { id: '5', title: 'Dormi na Praça', artist: 'Bruno & Marrone', category: 'Sertanejo', key: 'A', rhythm: 'Balada' },
+      { id: '6', title: 'Sinônimos', artist: 'Chitãozinho & Xororó / Zé Ramalho', category: 'Sertanejo', key: 'C', rhythm: 'Canção' },
+      
+      // Sertanejo Universitário / Hits
+      { id: '7', title: 'Notificação Preferida', artist: 'Zé Neto & Cristiano', category: 'Universitário', key: 'F#m', rhythm: 'Pop Sertanejo' },
+      { id: '8', title: 'Batom de Cereja', artist: 'Israel & Rodolffo', category: 'Universitário', key: 'G', rhythm: 'Arrocha' },
+      { id: '9', title: 'Bloqueado', artist: 'Gusttavo Lima', category: 'Universitário', key: 'Bb', rhythm: 'Balada' },
+      
+      // MPB, Pop & Pop Rock Acústico
+      { id: '10', title: 'Anunciação', artist: 'Alceu Valença', category: 'Pop / MPB', key: 'C', rhythm: 'Xote / Baião' },
+      { id: '11', title: 'De Janeiro a Janeiro', artist: 'Nando Reis / Roberta Campos', category: 'Pop / MPB', key: 'G', rhythm: 'Acústico' },
+      { id: '12', title: 'Pais e Filhos', artist: 'Legião Urbana', category: 'Pop Rock', key: 'C', rhythm: 'Rock Lento' },
+      { id: '13', title: 'Tempo Perdido', artist: 'Legião Urbana', category: 'Pop Rock', key: 'C', rhythm: 'Pop Rock' },
+      { id: '14', title: 'O Sol', artist: 'Vitor Kley', category: 'Pop / MPB', key: 'A', rhythm: 'Reggae Pop' },
+      { id: '15', title: 'Ai Preto', artist: 'Versão Acústica Especial', category: 'Hits', key: 'Dm', rhythm: 'Acústico' }
+    ];
+
+    const DEFAULT_CONFIG = {
+      artistName: 'Kildson',
+      artistTag: '🎤 VOZ & VIOLÃO',
+      artistBio: 'Faça seu pedido de música direto pro palco e acompanhe os momentos do show!',
+      pixKey: 'pix@kildsoncantor.com.br',
+      pixTitle: 'Apoie o Artista • Pix Couvert',
+      instagram: 'https://instagram.com',
+      spotify: 'https://spotify.com',
+      whatsapp: 'https://wa.me/5500000000000',
+      website: '#'
+    };
+
+    // Load initial states from LocalStorage or fallbacks
+    let REPERTOIRE = JSON.parse(localStorage.getItem('stagerequest_repertoire') || 'null') || DEFAULT_REPERTOIRE;
+    let artistProfile = JSON.parse(localStorage.getItem('stagerequest_profile') || 'null') || DEFAULT_CONFIG;
+    let stagePin = localStorage.getItem('stagerequest_pin') || '1234';
+
+    // State
+    let activeCategory = 'Todos';
+    let isCustomSong = false;
+    let selectedSongData = null;
+    let isStageUnlocked = false;
+    let audioChimeEnabled = true;
+    let nowPlayingRequest = null;
+    let activeStageTab = 'queue'; // 'queue' | 'settings'
+
+    // Requests List stored in memory / local storage
+    let stageRequests = JSON.parse(localStorage.getItem('stagerequest_queue') || 'null') || [
+      {
+        id: 'req-sample-1',
+        songTitle: 'Evidências',
+        artist: 'Chitãozinho & Xororó',
+        requester: 'Mesa da Família Silva',
+        table: 'Mesa 08',
+        dedication: 'Aniversário da Vovó Maria! Toca essa pra gente!',
+        timestamp: new Date(Date.now() - 1000 * 60 * 4).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        key: 'E',
+        status: 'pending'
+      }
+    ];
+
+    // Real-Time Cross-Tab / Cross-Window Sync Bus
+    const liveSyncBus = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('stage_requests_channel') : null;
+
+    /* =====================================================================
+       2. INITIALIZATION
+       ===================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      applyProfileToUI();
+      populateSettingsFormInputs();
+      buildCategoryPills();
+      renderSongCatalog();
+      renderManageCatalogList();
+      renderStageFeed();
+      updateStats();
+
+      // Listen to cross-window sync if available
+      if (liveSyncBus) {
+        liveSyncBus.onmessage = (event) => {
+          if (!event.data) return;
+          if (event.data.type === 'NEW_REQUEST') {
+            stageRequests.unshift(event.data.payload);
+            playStageChime();
+            renderStageFeed();
+            updateStats();
+            saveRequestsToStorage();
+          } else if (event.data.type === 'UPDATE_LIST') {
+            stageRequests = event.data.payload;
+            renderStageFeed();
+            updateStats();
+            saveRequestsToStorage();
+          } else if (event.data.type === 'UPDATE_PROFILE') {
+            artistProfile = event.data.payload;
+            applyProfileToUI();
+            populateSettingsFormInputs();
+          } else if (event.data.type === 'UPDATE_REPERTOIRE') {
+            REPERTOIRE = event.data.payload;
+            buildCategoryPills();
+            renderSongCatalog();
+            renderManageCatalogList();
+          }
+        };
+      }
+
+      // Populate app link for QR Modal
+      const currentUrl = window.location.href;
+      document.getElementById('app-share-url').textContent = currentUrl;
+    });
+
+    function saveRequestsToStorage() {
+      try {
+        localStorage.setItem('stagerequest_queue', JSON.stringify(stageRequests));
+      } catch (e) {}
+    }
+
+    /* =====================================================================
+       3. NAVIGATION & VIEW SWITCHER
+       ===================================================================== */
+    function switchView(targetView) {
+      const clientView = document.getElementById('client-view');
+      const stageView = document.getElementById('stage-view');
+      const tabClientBtn = document.getElementById('tab-client-btn');
+      const tabStageBtn = document.getElementById('tab-stage-btn');
+
+      if (targetView === 'client') {
+        clientView.classList.remove('hidden');
+        stageView.classList.add('hidden');
+        tabClientBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-brand-gold text-black shadow-sm flex items-center gap-1.5";
+        tabStageBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-gray-400 hover:text-white flex items-center gap-1.5 relative";
+      } else {
+        clientView.classList.add('hidden');
+        stageView.classList.remove('hidden');
+        tabStageBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-brand-gold text-black shadow-sm flex items-center gap-1.5 relative";
+        tabClientBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-gray-400 hover:text-white flex items-center gap-1.5";
+
+        if (isStageUnlocked) {
+          document.getElementById('stage-auth-gate').classList.add('hidden');
+          document.getElementById('stage-dashboard').classList.remove('hidden');
+        } else {
+          document.getElementById('stage-auth-gate').classList.remove('hidden');
+          document.getElementById('stage-dashboard').classList.add('hidden');
+        }
+      }
+    }
+
+    function switchStageTab(tab) {
+      activeStageTab = tab;
+      const queueSec = document.getElementById('stage-queue-section');
+      const settingsSec = document.getElementById('stage-settings-section');
+      const btnQueue = document.getElementById('stage-subtab-queue');
+      const btnSettings = document.getElementById('stage-subtab-settings');
+
+      if (tab === 'queue') {
+        queueSec.classList.remove('hidden');
+        settingsSec.classList.add('hidden');
+        btnQueue.className = "px-3 py-2 rounded-xl bg-brand-gold text-black text-xs font-bold flex items-center gap-1.5 transition-all";
+        btnSettings.className = "px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all";
+      } else {
+        queueSec.classList.add('hidden');
+        settingsSec.classList.remove('hidden');
+        btnSettings.className = "px-3 py-2 rounded-xl bg-brand-gold text-black text-xs font-bold flex items-center gap-1.5 transition-all";
+        btnQueue.className = "px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all";
+        populateSettingsFormInputs();
+      }
+    }
+
+    /* =====================================================================
+       4. CLIENT INTERFACE & PROFILE SYNC
+       ===================================================================== */
+    function applyProfileToUI() {
+      document.getElementById('artist-name-display').textContent = artistProfile.artistName || 'Kildson';
+      document.getElementById('artist-tag-display').textContent = artistProfile.artistTag || '🎤 VOZ & VIOLÃO';
+      document.getElementById('artist-bio-display').textContent = artistProfile.artistBio || '';
+      document.getElementById('pix-title-display').innerHTML = `${escapeHtml(artistProfile.pixTitle || 'Apoie o Artista • Pix Couvert')} <span class="text-[10px] bg-amber-500/20 text-brand-gold px-2 py-0.5 rounded-md font-semibold">1 Toque</span>`;
+      document.getElementById('pix-key-preview').textContent = artistProfile.pixKey || '';
+
+      // Links
+      if (artistProfile.instagram) document.getElementById('link-instagram').href = artistProfile.instagram;
+      if (artistProfile.spotify) document.getElementById('link-spotify').href = artistProfile.spotify;
+      if (artistProfile.whatsapp) document.getElementById('link-whatsapp').href = artistProfile.whatsapp;
+      if (artistProfile.website) document.getElementById('link-website').href = artistProfile.website;
+    }
+
+    function populateSettingsFormInputs() {
+      document.getElementById('cfg-artist-name').value = artistProfile.artistName || '';
+      document.getElementById('cfg-artist-tag').value = artistProfile.artistTag || '';
+      document.getElementById('cfg-artist-bio').value = artistProfile.artistBio || '';
+      document.getElementById('cfg-pix-key').value = artistProfile.pixKey || '';
+      document.getElementById('cfg-pix-title').value = artistProfile.pixTitle || '';
+      document.getElementById('cfg-link-instagram').value = artistProfile.instagram || '';
+      document.getElementById('cfg-link-spotify').value = artistProfile.spotify || '';
+      document.getElementById('cfg-link-whatsapp').value = artistProfile.whatsapp || '';
+      document.getElementById('cfg-link-website').value = artistProfile.website || '';
+    }
+
+    function handleSaveProfileSettings(event) {
+      event.preventDefault();
+      artistProfile = {
+        artistName: document.getElementById('cfg-artist-name').value.trim(),
+        artistTag: document.getElementById('cfg-artist-tag').value.trim(),
+        artistBio: document.getElementById('cfg-artist-bio').value.trim(),
+        pixKey: document.getElementById('cfg-pix-key').value.trim(),
+        pixTitle: document.getElementById('cfg-pix-title').value.trim(),
+        instagram: document.getElementById('cfg-link-instagram').value.trim(),
+        spotify: document.getElementById('cfg-link-spotify').value.trim(),
+        whatsapp: document.getElementById('cfg-link-whatsapp').value.trim(),
+        website: document.getElementById('cfg-link-website').value.trim()
+      };
+
+      localStorage.setItem('stagerequest_profile', JSON.stringify(artistProfile));
+      applyProfileToUI();
+
+      if (liveSyncBus) {
+        liveSyncBus.postMessage({
+          type: 'UPDATE_PROFILE',
+          payload: artistProfile
+        });
+      }
+
+      const msg = document.getElementById('profile-saved-msg');
+      msg.classList.remove('hidden');
+      setTimeout(() => {
+        msg.classList.add('hidden');
+      }, 3000);
+    }
+
+    /* =====================================================================
+       5. REPERTOIRE CATALOG & MANAGEMENT
+       ===================================================================== */
+    function buildCategoryPills() {
+      const categories = ['Todos', ...new Set(REPERTOIRE.map(s => s.category))];
+      const pillsContainer = document.getElementById('category-pills');
+      pillsContainer.innerHTML = '';
+
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `px-3 py-1 rounded-xl whitespace-nowrap transition-all text-xs font-medium ${
+          cat === activeCategory 
+            ? 'bg-amber-500/20 text-brand-gold border border-brand-gold/40 shadow-sm' 
+            : 'bg-white/5 text-gray-400 border border-white/5 hover:text-white'
+        }`;
+        btn.textContent = cat;
+        btn.onclick = () => {
+          activeCategory = cat;
+          buildCategoryPills();
+          filterSongList();
+        };
+        pillsContainer.appendChild(btn);
+      });
+    }
+
+    function renderSongCatalog(filteredList = null) {
+      const container = document.getElementById('songs-list-box');
+      const list = filteredList || REPERTOIRE;
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="p-3 text-center text-xs text-gray-500">Nenhuma música encontrada no catálogo. Digite acima ou selecione "Música fora do repertório".</div>`;
+        return;
+      }
+
+      list.forEach(song => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between p-2.5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors border border-transparent hover:border-amber-500/20";
+        item.onclick = () => selectSong(song);
+        item.innerHTML = `
+          <div class="flex flex-col text-left">
+            <span class="text-xs font-semibold text-white">${escapeHtml(song.title)}</span>
+            <span class="text-[11px] text-gray-400">${escapeHtml(song.artist)} • <span class="text-amber-400/80">${escapeHtml(song.category)}</span></span>
+          </div>
+          <span class="text-[10px] font-mono bg-white/5 px-2 py-0.5 rounded text-gray-300 border border-white/10">Tom: ${escapeHtml(song.key)}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderManageCatalogList() {
+      const listEl = document.getElementById('catalog-manage-list');
+      const totalBadge = document.getElementById('repertoire-total-badge');
+      totalBadge.textContent = `${REPERTOIRE.length} músicas`;
+      listEl.innerHTML = '';
+
+      if (REPERTOIRE.length === 0) {
+        listEl.innerHTML = `<div class="p-3 text-center text-xs text-gray-500">Catálogo vazio. Adicione músicas pelo formulário acima.</div>`;
+        return;
+      }
+
+      REPERTOIRE.forEach(song => {
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-xs";
+        row.innerHTML = `
+          <div class="flex-1 pr-2">
+            <b class="text-white">${escapeHtml(song.title)}</b> 
+            <span class="text-gray-400">— ${escapeHtml(song.artist)}</span>
+            <span class="ml-2 font-mono text-[10px] bg-amber-500/20 text-brand-gold px-1.5 py-0.5 rounded">Tom: ${escapeHtml(song.key)}</span>
+            <span class="ml-1 text-[10px] text-gray-400">(${escapeHtml(song.category)})</span>
+          </div>
+          <button onclick="removeSongFromCatalog('${song.id}')" class="text-red-400 hover:text-red-300 px-2 py-1 bg-red-500/10 hover:bg-red-500/20 rounded-md font-bold text-xs" title="Excluir música">
+            ✕
+          </button>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    function handleAddSongToCatalog(event) {
+      event.preventDefault();
+      const title = document.getElementById('new-song-title').value.trim();
+      const artist = document.getElementById('new-song-artist').value.trim();
+      const key = document.getElementById('new-song-key').value.trim().toUpperCase();
+      const category = document.getElementById('new-song-category').value.trim();
+
+      const newSong = {
+        id: 'song-' + Date.now(),
+        title,
+        artist,
+        key,
+        category,
+        rhythm: 'Ao Vivo'
+      };
+
+      REPERTOIRE.push(newSong);
+      localStorage.setItem('stagerequest_repertoire', JSON.stringify(REPERTOIRE));
+
+      // Reset form fields
+      document.getElementById('new-song-title').value = '';
+      document.getElementById('new-song-artist').value = '';
+      document.getElementById('new-song-key').value = '';
+      document.getElementById('new-song-category').value = '';
+
+      // Refresh both views
+      buildCategoryPills();
+      renderSongCatalog();
+      renderManageCatalogList();
+
+      if (liveSyncBus) {
+        liveSyncBus.postMessage({
+          type: 'UPDATE_REPERTOIRE',
+          payload: REPERTOIRE
+        });
+      }
+    }
+
+    function removeSongFromCatalog(songId) {
+      REPERTOIRE = REPERTOIRE.filter(s => s.id !== songId);
+      localStorage.setItem('stagerequest_repertoire', JSON.stringify(REPERTOIRE));
+      buildCategoryPills();
+      renderSongCatalog();
+      renderManageCatalogList();
+
+      if (liveSyncBus) {
+        liveSyncBus.postMessage({
+          type: 'UPDATE_REPERTOIRE',
+          payload: REPERTOIRE
+        });
+      }
+    }
+
+    function filterSongList() {
+      const query = document.getElementById('song-search').value.toLowerCase().trim();
+      let list = REPERTOIRE;
+
+      if (activeCategory !== 'Todos') {
+        list = list.filter(s => s.category === activeCategory);
+      }
+
+      if (query) {
+        list = list.filter(s => 
+          s.title.toLowerCase().includes(query) || 
+          s.artist.toLowerCase().includes(query)
+        );
+      }
+
+      renderSongCatalog(list);
+    }
+
+    function selectSong(song) {
+      selectedSongData = song;
+      document.getElementById('selected-song-input').value = song.title;
+      document.getElementById('selected-song-name').innerHTML = `<b>${escapeHtml(song.title)}</b> — ${escapeHtml(song.artist)} (Tom: ${escapeHtml(song.key)})`;
+      document.getElementById('selected-song-badge').classList.remove('hidden');
+      document.getElementById('selected-song-badge').classList.add('flex');
+      document.getElementById('song-search').classList.add('hidden');
+      document.getElementById('songs-list-box').classList.add('hidden');
+    }
+
+    function clearSelectedSong() {
+      selectedSongData = null;
+      document.getElementById('selected-song-input').value = '';
+      document.getElementById('selected-song-badge').classList.add('hidden');
+      document.getElementById('selected-song-badge').classList.remove('flex');
+      document.getElementById('song-search').classList.remove('hidden');
+      document.getElementById('songs-list-box').classList.remove('hidden');
+    }
+
+    function toggleCustomSongInput() {
+      isCustomSong = !isCustomSong;
+      const customContainer = document.getElementById('custom-song-container');
+      const catalogContainer = document.getElementById('catalog-selector-container');
+      const toggleLabel = document.getElementById('toggle-custom-label');
+      const customInput = document.getElementById('custom-song-input');
+      const songInput = document.getElementById('selected-song-input');
+
+      if (isCustomSong) {
+        customContainer.classList.remove('hidden');
+        catalogContainer.classList.add('hidden');
+        toggleLabel.textContent = '← Escolher do repertório oficial';
+        customInput.setAttribute('required', 'true');
+        songInput.removeAttribute('required');
+        customInput.focus();
+      } else {
+        customContainer.classList.add('hidden');
+        catalogContainer.classList.remove('hidden');
+        toggleLabel.textContent = '+ Música fora do repertório';
+        customInput.removeAttribute('required');
+        songInput.setAttribute('required', 'true');
+      }
+    }
+
+    function handleSendRequest(event) {
+      event.preventDefault();
+
+      let finalSongTitle = '';
+      let finalArtist = 'Original / Desconhecido';
+      let songKey = 'A definir';
+
+      if (isCustomSong) {
+        finalSongTitle = document.getElementById('custom-song-input').value.trim();
+        finalArtist = 'Pedido Livre';
+      } else {
+        if (!selectedSongData) {
+          const typedSearch = document.getElementById('song-search').value.trim();
+          if (typedSearch) {
+            finalSongTitle = typedSearch;
+            finalArtist = 'Sugestão do cliente';
+          } else {
+            return;
+          }
+        } else {
+          finalSongTitle = selectedSongData.title;
+          finalArtist = selectedSongData.artist;
+          songKey = selectedSongData.key;
+        }
+      }
+
+      const requesterName = document.getElementById('requester-name').value.trim();
+      const requesterTable = document.getElementById('requester-table').value.trim() || 'No salão';
+      const dedication = document.getElementById('requester-dedication').value.trim();
+
+      const newRequest = {
+        id: 'req-' + Date.now(),
+        songTitle: finalSongTitle,
+        artist: finalArtist,
+        requester: requesterName,
+        table: requesterTable,
+        dedication: dedication,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        key: songKey,
+        status: 'pending'
+      };
+
+      stageRequests.unshift(newRequest);
+      saveRequestsToStorage();
+
+      if (liveSyncBus) {
+        liveSyncBus.postMessage({
+          type: 'NEW_REQUEST',
+          payload: newRequest
+        });
+      }
+
+      playStageChime();
+      renderStageFeed();
+      updateStats();
+
+      document.getElementById('request-form').reset();
+      clearSelectedSong();
+      if (isCustomSong) toggleCustomSongInput();
+
+      document.getElementById('success-banner').classList.remove('hidden');
+      document.getElementById('success-banner').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function dismissSuccessBanner() {
+      document.getElementById('success-banner').classList.add('hidden');
+    }
+
+    /* =====================================================================
+       6. PIX ONE-TAP COPIER
+       ===================================================================== */
+    function copyPixKey() {
+      const pixKey = artistProfile.pixKey || "pix@kildsoncantor.com.br";
+      const btnLabel = document.getElementById('pix-btn-label');
+
+      const tempInput = document.createElement("input");
+      tempInput.value = pixKey;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand("copy");
+        btnLabel.textContent = "Copiado! ✓";
+        setTimeout(() => {
+          btnLabel.textContent = "Copiar Pix";
+        }, 2500);
+      } catch (err) {
+        btnLabel.textContent = pixKey;
+      }
+      document.body.removeChild(tempInput);
+    }
+
+    /* =====================================================================
+       7. STAGE AUTHENTICATION & PIN MANAGEMENT
+       ===================================================================== */
+    function handleStageLogin(event) {
+      event.preventDefault();
+      const enteredPin = document.getElementById('stage-pin-input').value.trim();
+      const errorMsg = document.getElementById('pin-error-msg');
+
+      if (enteredPin === stagePin) {
+        isStageUnlocked = true;
+        errorMsg.classList.add('hidden');
+        document.getElementById('stage-auth-gate').classList.add('hidden');
+        document.getElementById('stage-dashboard').classList.remove('hidden');
+        renderStageFeed();
+      } else {
+        errorMsg.classList.remove('hidden');
+      }
+    }
+
+    function lockStage() {
+      isStageUnlocked = false;
+      document.getElementById('stage-pin-input').value = '';
+      document.getElementById('stage-auth-gate').classList.remove('hidden');
+      document.getElementById('stage-dashboard').classList.add('hidden');
+    }
+
+    function handleChangeStagePin(event) {
+      event.preventDefault();
+      const current = document.getElementById('pin-current-input').value.trim();
+      const newPin = document.getElementById('pin-new-input').value.trim();
+      const confirmPin = document.getElementById('pin-confirm-input').value.trim();
+      const statusEl = document.getElementById('pin-change-status');
+
+      if (current !== stagePin) {
+        statusEl.className = "text-xs font-semibold text-red-400";
+        statusEl.textContent = "Senha atual incorreta.";
+        statusEl.classList.remove('hidden');
+        return;
+      }
+
+      if (newPin.length < 4) {
+        statusEl.className = "text-xs font-semibold text-red-400";
+        statusEl.textContent = "A nova senha deve ter pelo menos 4 dígitos.";
+        statusEl.classList.remove('hidden');
+        return;
+      }
+
+      if (newPin !== confirmPin) {
+        statusEl.className = "text-xs font-semibold text-red-400";
+        statusEl.textContent = "As novas senhas não coincidem.";
+        statusEl.classList.remove('hidden');
+        return;
+      }
+
+      stagePin = newPin;
+      localStorage.setItem('stagerequest_pin', stagePin);
+
+      statusEl.className = "text-xs font-semibold text-emerald-400";
+      statusEl.textContent = "✓ Senha atualizada com sucesso!";
+      statusEl.classList.remove('hidden');
+
+      document.getElementById('pin-current-input').value = '';
+      document.getElementById('pin-new-input').value = '';
+      document.getElementById('pin-confirm-input').value = '';
+
+      setTimeout(() => {
+        statusEl.classList.add('hidden');
+      }, 3500);
+    }
+
+    /* =====================================================================
+       8. STAGE VIEW LOGIC & FEED
+       ===================================================================== */
+    function renderStageFeed() {
+      const container = document.getElementById('stage-cards-container');
+      const emptyState = document.getElementById('stage-empty-state');
+      
+      const pendingList = stageRequests.filter(r => r.status === 'pending');
+
+      if (pendingList.length === 0) {
+        emptyState.classList.remove('hidden');
+        container.innerHTML = '';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = '';
+
+      pendingList.forEach((req) => {
+        const card = document.createElement('div');
+        card.className = "glass-panel p-4 rounded-2xl border border-white/10 hover:border-amber-500/40 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4";
+        
+        card.innerHTML = `
+          <!-- Song Title & Dedication Info (High contrast) -->
+          <div class="space-y-1.5 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-brand-gold border border-brand-gold/30">
+                TOM: ${escapeHtml(req.key)}
+              </span>
+              <span class="text-xs text-gray-400 font-mono">${escapeHtml(req.timestamp)}</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-white/10 text-white">
+                📍 ${escapeHtml(req.table)}
+              </span>
+            </div>
+
+            <h4 class="text-xl sm:text-2xl font-display font-extrabold text-white tracking-wide">
+              ${escapeHtml(req.songTitle)}
+            </h4>
+
+            <p class="text-xs text-gray-300">
+              <span class="text-gray-400">Por:</span> <b class="text-white">${escapeHtml(req.requester)}</b>
+              ${req.artist !== 'Pedido Livre' ? ` • <span class="text-gray-400">Orig:</span> ${escapeHtml(req.artist)}` : ''}
+            </p>
+
+            ${req.dedication ? `
+              <div class="mt-2 p-2.5 rounded-xl bg-amber-500/10 border-l-2 border-brand-gold text-xs text-amber-200 italic">
+                "${escapeHtml(req.dedication)}"
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Musician Action Buttons in 1-Touch -->
+          <div class="flex items-center gap-2 flex-shrink-0 self-end md:self-center">
+            <button onclick="setNowPlaying('${req.id}')" class="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-black font-extrabold text-xs flex items-center gap-1.5 shadow-green-glow transition-transform active:scale-95">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>TOCAR AGORA</span>
+            </button>
+
+            <button onclick="markAsCompleted('${req.id}')" class="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors" title="Marcar como atendida">
+              ✓ Concluir
+            </button>
+
+            <button onclick="skipRequest('${req.id}')" class="px-2.5 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs transition-colors" title="Pular / Fica pra próxima">
+              ✕
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function setNowPlaying(reqId) {
+      const found = stageRequests.find(r => r.id === reqId);
+      if (!found) return;
+
+      nowPlayingRequest = found;
+      found.status = 'playing';
+
+      const banner = document.getElementById('now-playing-banner');
+      document.getElementById('now-playing-title').textContent = found.songTitle;
+      document.getElementById('now-playing-key').textContent = `TOM: ${found.key}`;
+      document.getElementById('now-playing-details').textContent = 
+        `Pedido por: ${found.requester} • ${found.table} ${found.dedication ? `• "${found.dedication}"` : ''}`;
+
+      banner.classList.remove('hidden');
+      syncStageUpdate();
+    }
+
+    function finishNowPlaying() {
+      if (nowPlayingRequest) {
+        nowPlayingRequest.status = 'completed';
+        nowPlayingRequest = null;
+      }
+      document.getElementById('now-playing-banner').classList.add('hidden');
+      syncStageUpdate();
+    }
+
+    function markAsCompleted(reqId) {
+      const found = stageRequests.find(r => r.id === reqId);
+      if (found) {
+        found.status = 'completed';
+        syncStageUpdate();
+      }
+    }
+
+    function skipRequest(reqId) {
+      const found = stageRequests.find(r => r.id === reqId);
+      if (found) {
+        found.status = 'skipped';
+        syncStageUpdate();
+      }
+    }
+
+    function clearAllRequestsPrompt() {
+      stageRequests = [];
+      if (nowPlayingRequest) {
+        document.getElementById('now-playing-banner').classList.add('hidden');
+        nowPlayingRequest = null;
+      }
+      syncStageUpdate();
+    }
+
+    function syncStageUpdate() {
+      saveRequestsToStorage();
+      renderStageFeed();
+      updateStats();
+      if (liveSyncBus) {
+        liveSyncBus.postMessage({
+          type: 'UPDATE_LIST',
+          payload: stageRequests
+        });
+      }
+    }
+
+    function updateStats() {
+      const pendingCount = stageRequests.filter(r => r.status === 'pending').length;
+      const completedCount = stageRequests.filter(r => r.status === 'completed').length;
+
+      document.getElementById('stat-pending-num').textContent = pendingCount;
+      document.getElementById('stat-completed-num').textContent = completedCount;
+
+      const badge = document.getElementById('badge-pending-count');
+      if (pendingCount > 0) {
+        badge.textContent = pendingCount;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    /* =====================================================================
+       9. AUDIO CHIME (SYNTHESIZED WEB AUDIO API)
+       ===================================================================== */
+    function toggleAudioChime() {
+      audioChimeEnabled = !audioChimeEnabled;
+      const btn = document.getElementById('audio-toggle-btn');
+      btn.innerHTML = audioChimeEnabled ? '🔔 Som: ON' : '🔕 Som: OFF';
+    }
+
+    function playStageChime() {
+      if (!audioChimeEnabled) return;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [440, 659.25, 880];
+        notes.forEach((freq, index) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.12);
+          
+          gain.gain.setValueAtTime(0, audioCtx.currentTime + index * 0.12);
+          gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + index * 0.12 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.12 + 0.6);
+          
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          osc.start(audioCtx.currentTime + index * 0.12);
+          osc.stop(audioCtx.currentTime + index * 0.12 + 0.65);
+        });
+      } catch (e) {}
+    }
+
+    /* =====================================================================
+       10. QR CODE GENERATION & SHARING
+       ===================================================================== */
+    let qrGenerated = false;
+
+    function openQrModal() {
+      const modal = document.getElementById('qr-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      if (!qrGenerated) {
+        const container = document.getElementById('qrcode-display');
+        container.innerHTML = '';
+        new QRCode(container, {
+          text: window.location.href,
+          width: 190,
+          height: 190,
+          colorDark: "#090A0F",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+        qrGenerated = true;
+      }
+    }
+
+    function closeQrModal() {
+      const modal = document.getElementById('qr-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function copyShareUrl() {
+      const tempInput = document.createElement("input");
+      tempInput.value = window.location.href;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand("copy");
+      } catch (err) {}
+      document.body.removeChild(tempInput);
+      closeQrModal();
+    }
+
+    /* Utility: HTML Sanitize */
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
